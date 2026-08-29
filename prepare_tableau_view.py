@@ -32,7 +32,7 @@ SELECT * FROM pivoted_trade ORDER BY geo_name, year, quarter;
 print("Step 2: Loading data and building full continuous timeline grid...")
 df_raw = pd.read_sql_query(query, connection)
 
-# Cria uma grade completa de todas as combinações de países e períodos (2022-Q1 a 2027-Q4)
+# Create a complete grid of all country and period combinations (2022-Q1 to 2027-Q4)
 countries = df_raw[['geo_code', 'geo_name']].drop_duplicates()
 years = [2022, 2023, 2024, 2025, 2026, 2027]
 quarters = ['Q1', 'Q2', 'Q3', 'Q4']
@@ -51,26 +51,26 @@ for _, country in countries.iterrows():
 
 df_grid = pd.DataFrame(full_grid)
 
-# Mescla os dados reais com a grade completa
+# Merge actual data with the complete grid
 df_tableau = pd.merge(df_grid, df_raw, on=['geo_code', 'geo_name', 'year', 'quarter', 'time_period'], how='left')
 
-# Substitui zeros por NaN para interpolar corretamente
+# Replace zeros with NaN for correct interpolation
 df_tableau['import_meur'] = df_tableau['import_meur'].replace(0, np.nan)
 df_tableau['export_meur'] = df_tableau['export_meur'].replace(0, np.nan)
 
-# Interpola linearmente por país e preenche extremidades
+# Linearly interpolate by country and fill extremities
 df_tableau['import_meur'] = df_tableau.groupby('geo_code')['import_meur'].transform(lambda x: x.interpolate(method='linear').ffill().bfill())
 df_tableau['export_meur'] = df_tableau.groupby('geo_code')['export_meur'].transform(lambda x: x.interpolate(method='linear').ffill().bfill())
 
-# Garante que nenhum país fique com valores nulos/zerados residuais
+# Ensure no country is left with residual null or zero values
 df_tableau['import_meur'] = df_tableau['import_meur'].fillna(df_tableau['import_meur'].median())
 df_tableau['export_meur'] = df_tableau['export_meur'].fillna(df_tableau['export_meur'].median())
 
-# Recria as métricas derivadas
+# Recreate derived metrics
 df_tableau['trade_balance_meur'] = df_tableau['export_meur'] - df_tableau['import_meur']
 df_tableau['total_trade_volume_meur'] = df_tableau['export_meur'] + df_tableau['import_meur']
 
-# Calcula crescimentos QoQ e YoY
+# Calculate QoQ and YoY growth rates
 df_tableau['prev_quarter_export'] = df_tableau.groupby('geo_code')['export_meur'].shift(1)
 df_tableau['prev_year_export'] = df_tableau.groupby('geo_code')['export_meur'].shift(4)
 
