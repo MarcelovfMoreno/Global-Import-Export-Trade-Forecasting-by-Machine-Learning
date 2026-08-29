@@ -85,7 +85,7 @@ if response.status_code == 200:
       ~df["geo_code"].isin(aggregates_to_exclude)
   ]
 
-  # Filtro direto para os 10 mercados-chave selecionados
+  # Direct filter for the 10 selected core markets
   target_core_countries = [
       "Germany", "Netherlands", "Ireland", "Spain", 
       "Portugal", "Italy", "Luxembourg", "Belgium", 
