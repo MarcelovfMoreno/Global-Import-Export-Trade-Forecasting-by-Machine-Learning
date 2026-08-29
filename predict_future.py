@@ -10,11 +10,11 @@ print("Step 1: Connecting to SQLite database and loading trained model...")
 connection = sqlite3.connect(database_filename)
 model = joblib.load(model_filename)
 
-# Selecionamos apenas as colunas que sabemos que existem na tabela
+# Select only the columns known to exist in the table
 query = "SELECT geo_code, geo_name, flow_code, flow_description, time_period, value_meur, year, quarter FROM clean_trade_model_ready"
 df = pd.read_sql(query, connection)
 
-# Cria o quarter_num de forma segura extraindo o número da string 'quarter' (ex: 'Q1' vira 1)
+# Safely create quarter_num by extracting the numeric value from the 'quarter' string (e.g., 'Q1' becomes 1)
 df["quarter_num"] = df["quarter"].str.extract(r'(\d+)').astype(int)
 
 print(f"Loaded {len(df)} rows. Generating future predictions for missing periods...")
@@ -53,7 +53,7 @@ df_future = pd.DataFrame(future_rows)
 
 if not df_future.empty:
     print(f"Generated {len(df_future)} predicted rows for 2027. Inserting into database...")
-    # Substitui a tabela de predições anterior para evitar duplicadas
+    # Replace the previous predictions table to prevent duplicates
     df_future.to_sql("trade_forecast_predictions", connection, if_exists="replace", index=False)
     print("Predictions successfully saved to 'trade_forecast_predictions'.")
 else:
